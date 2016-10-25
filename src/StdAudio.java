@@ -283,11 +283,16 @@ public final class StdAudio {
 
     // create a note (sine wave) of the given frequency (Hz), for the given
     // duration (seconds) scaled to the given volume (amplitude)
-    public static double[] note(double hz, double duration, double amplitude) {
+    public static double[] note(boolean harmonic, double hz, double duration, double amplitude) {
         int n = (int) (StdAudio.SAMPLE_RATE * duration);
         double[] a = new double[n+1];
         for (int i = 0; i <= n; i++)
-            a[i] = amplitude * Math.sin(2 * Math.PI * i * hz / StdAudio.SAMPLE_RATE);
+        	if(harmonic){
+        		a[i] = amplitude * Math.sin(4 * Math.PI * i * hz / StdAudio.SAMPLE_RATE);
+        	}
+        	else{
+        		a[i] = amplitude * Math.sin(2 * Math.PI * i * hz / StdAudio.SAMPLE_RATE);
+        	} 
         return a;
     }
 

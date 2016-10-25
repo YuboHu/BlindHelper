@@ -1,6 +1,7 @@
 import javax.imageio.ImageIO;
 import javax.media.Buffer;
 import javax.media.CannotRealizeException;
+import javax.media.Controller;
 import javax.media.Manager;
 import javax.media.NoPlayerException;
 import javax.media.Player;
@@ -53,8 +54,12 @@ public class BlindHelper extends JFrame {
 	  private static JPanel videoPanel = null;
 	  private static JImagePanel imgPanel = null;
 	  private static JImagePanel grayPanel = null;
+	  private static Player mediaPlayer = null;
 	  
 	  public BlindHelper() {
+		  initialize();
+	  }
+	  private void initialize(){
 		// Variable Initialization
 		imgPanel = new JImagePanel(null, 0, 0);
 		grayPanel = new JImagePanel(null, 0, 0);
@@ -155,6 +160,17 @@ public class BlindHelper extends JFrame {
 	    
 	    play1frame.addActionListener( new ActionListener() {
 	        public void actionPerformed(ActionEvent ae) {
+	          if(mediaPlayer!=null){
+	        	    mediaPlayer.start();
+			        try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+			        mediaPlayer.stop();
+			        grabFrame();
+	          }
 	          try{
 	            generateTone(cbHarmonic.isSelected());
 	          }catch(LineUnavailableException lue){
@@ -162,6 +178,18 @@ public class BlindHelper extends JFrame {
 	          }
 	        }
 	    });
+	    
+	    playAll.addActionListener( new ActionListener() {
+	        public void actionPerformed(ActionEvent ae) {
+	        	
+	        	while(mediaPlayer!=null&&mediaPlayer.getMediaTime().getSeconds() < mediaPlayer.getDuration().getSeconds())
+	        	{
+	        		for(ActionListener a: play1frame.getActionListeners()) {
+	        		    a.actionPerformed(new ActionEvent(play1frame,0,null));
+	        		}
+		        }
+	        }
+	        });
 	  }
 	  
 	  public class JImagePanel extends JPanel{  
@@ -209,7 +237,7 @@ public class BlindHelper extends JFrame {
 		private void loadVideoURL(URL mediaURL) throws IOException {
 			try {
 				Manager.setHint(Manager.LIGHTWEIGHT_RENDERER, true);
-		        Player mediaPlayer = Manager.createRealizedPlayer(mediaURL);
+		        mediaPlayer = Manager.createRealizedPlayer(mediaURL);
 		        Component video = mediaPlayer.getVisualComponent();
 		        Component controls = mediaPlayer.getControlPanelComponent();
 		
@@ -221,39 +249,18 @@ public class BlindHelper extends JFrame {
 		        	videoPanel.add(controls, BorderLayout.SOUTH);
 		        }
 		
+		        mediaPlayer.getGainControl().setMute(true);
 		        mediaPlayer.start();
-	    		mediaPlayer.getControl("javax.media.control.FramePositioningControl");
-	            FrameGrabbingControl fg = (FrameGrabbingControl)mediaPlayer.getControl("javax.media.control.FrameGrabbingControl");
-
-	            //mediaPlayer.prefetch();
-
-	            Buffer buf = fg.grabFrame();
-	            VideoFormat vf = (VideoFormat) buf.getFormat();
-	 
-	            BufferToImage bufferToImage = new BufferToImage(vf);
-	            Image im = bufferToImage.createImage(buf);
-
-	            BufferedImage formatImg = new BufferedImage(64, 64, BufferedImage.TYPE_BYTE_GRAY);
-	            Graphics g = formatImg.getGraphics();
-
-	            g.drawImage(im, 0, 0, 64, 64, null);
-	            g.dispose();
-	            
-	            imgBuffer = formatImg;
-	            int width = imgBuffer.getWidth()/2;
-	            int height = imgBuffer.getHeight()/2;
-			  
-	            BufferedImage resizedImage = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
-	            BufferedImage grayImage = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
-	            Graphics2D graph1 = resizedImage.createGraphics();
-	            graph1.drawImage(imgBuffer, 0, 0, width, height, null);
-	            graph1.dispose();
-	            Graphics2D graph2 = grayImage.createGraphics();
-	            graph2.drawImage(imgBuffer, 0, 0, width, height, null);
-	            graph2.dispose();
-			  
-	            grayValue = normalizeImage(imgBuffer);
-	            setSize(imgBuffer.getWidth() * 2, imgBuffer.getHeight() + 100);    
+		        try {
+					Thread.sleep(10);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+		        mediaPlayer.stop();
+		        grabFrame();
+	    		
+	            setSize(500, 500);    
 			} catch (NoPlayerException noPlayerException) {
 				System.err.println("No media player found");
 		    } // end catch
@@ -263,7 +270,43 @@ public class BlindHelper extends JFrame {
 		    catch (IOException iOException) {
 		        System.err.println("Error reading from the source");
 		    }
-		}	  
+		}
+		
+		private void grabFrame(){
+			mediaPlayer.getControl("javax.media.control.FramePositioningControl");
+            FrameGrabbingControl fg = (FrameGrabbingControl)mediaPlayer.getControl("javax.media.control.FrameGrabbingControl");
+
+            //mediaPlayer.prefetch();
+
+            Buffer buf = fg.grabFrame();
+            VideoFormat vf = (VideoFormat) buf.getFormat();
+ 
+            BufferToImage bufferToImage = new BufferToImage(vf);
+            Image im = bufferToImage.createImage(buf);
+
+            BufferedImage formatImg = new BufferedImage(64, 64, BufferedImage.TYPE_BYTE_GRAY);
+            Graphics g = formatImg.getGraphics();
+
+            g.drawImage(im, 0, 0, 64, 64, null);
+            g.dispose();
+            
+            imgBuffer = formatImg;
+            int width = imgBuffer.getWidth()/2;
+            int height = imgBuffer.getHeight()/2;
+		  
+            BufferedImage resizedImage = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
+            BufferedImage grayImage = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
+            Graphics2D graph1 = resizedImage.createGraphics();
+            graph1.drawImage(imgBuffer, 0, 0, width, height, null);
+            graph1.dispose();
+            Graphics2D graph2 = grayImage.createGraphics();
+            graph2.drawImage(imgBuffer, 0, 0, width, height, null);
+            graph2.dispose();
+		  
+            grayValue = normalizeImage(imgBuffer);
+            
+            videoPanel.repaint();
+		}
 	  
 		private static int[][] normalizeImage(BufferedImage imgBuffer) {
 			BufferedImage resizedImage = new BufferedImage(64, 64, BufferedImage.TYPE_3BYTE_BGR);
@@ -301,7 +344,7 @@ public class BlindHelper extends JFrame {
 		    	for(int y = 0;y < 64;y++) {
 		    		int hz = 20 + y*60;
 		    		int volume = grayValue[x][y] * 6;
-		    		audio[y] = StdAudio.note(hz, secs, volume);
+		    		audio[y] = StdAudio.note(addHarmonic, hz, secs, volume);
 		    		//StdAudio.play(audio[y]);
 		    	}
 				for(int i = 0; i < audio[0].length; ++i) {
