@@ -1,31 +1,27 @@
 import javax.imageio.ImageIO;
 import javax.media.Buffer;
 import javax.media.CannotRealizeException;
-import javax.media.Controller;
+
 import javax.media.Manager;
 import javax.media.NoPlayerException;
 import javax.media.Player;
-import javax.media.bean.playerbean.MediaPlayer;
+
 import javax.media.control.FrameGrabbingControl;
-import javax.media.control.FramePositioningControl;
+
 import javax.media.format.VideoFormat;
 import javax.media.util.BufferToImage;
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.SourceDataLine;
+
 import javax.sound.sampled.LineUnavailableException;
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.Dimension;
+
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GridLayout;
-import java.awt.Toolkit;
+
 import java.awt.Image;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
+
 import java.io.IOException;
 import java.awt.event.ActionEvent;
 import javax.swing.JFrame;
@@ -35,13 +31,10 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JSlider;
+
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
+
 import java.net.MalformedURLException;
 import java.net.URL;
 import org.apache.commons.lang.ArrayUtils;
@@ -342,7 +335,7 @@ public class BlindHelper extends JFrame {
 		    for(int x = 0;x < 64;x++) {
 		    	double[][] audio = new double[64][];
 		    	for(int y = 0;y < 64;y++) {
-		    		int hz = 20 + y*60;
+		    		double hz = 440 * Math.pow(2, (32-y)/12);
 		    		int volume = grayValue[x][y] * 6;
 		    		audio[y] = StdAudio.note(addHarmonic, hz, secs, volume);
 		    		//StdAudio.play(audio[y]);
